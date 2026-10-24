@@ -189,16 +189,122 @@ const manual = (fn) => () => {
     render();
 };
 
-function wireUp() {
-  for (const ex of EXAMPLES) {
-    const o = document.createElement('option');
-    o.textContent = ex.name;
-    $('examples').append(o);
+const library = EXAMPLES.map((e, i) => ({ id: 'ex' + i, name: e.name, code: e.code, builtin: true }));
+let selectedId = 'ex1';
+let customCount = 0;
+let renaming = false;
+
+const current = () => library.find((p) => p.id === selectedId);
+
+function freshName() {
+  const name = (n) => (n === 1 ? 'Custom' : 'Custom ' + n);
+  let n = 1;
+  while (library.some((p) => p.name === name(n))) n++;
+  return name(n);
+}
+
+function addCustom(code, name) {
+  customCount++;
+  const p = { id: 'c' + customCount, name: name || freshName(), code, builtin: false };
+  library.push(p);
+  selectedId = p.id;
+}
+
+function rebuildSelect() {
+  const sel = $('examples');
+  sel.replaceChildren();
+  const groups = [['My programs', library.filter((p) => !p.builtin)], ['Examples', library.filter((p) => p.builtin)]];
+  for (const [label, items] of groups) {
+    if (!items.length) continue;
+    const g = document.createElement('optgroup');
+    g.label = label;
+    for (const p of items) {
+      const o = document.createElement('option');
+      o.value = p.id;
+      o.textContent = p.name;
+      g.append(o);
+    }
+    sel.append(g);
   }
-  $('examples').onchange = () => {
-    $('src').value = EXAMPLES[$('examples').selectedIndex].code;
-    execute();
-  };
+  sel.value = selectedId;
+  $('rename').disabled = $('remove').disabled = current().builtin;
+}
+
+function choose(id) {
+  selectedId = id;
+  $('src').value = current().code;
+  rebuildSelect();
+  execute();
+}
+
+function onEdit() {
+  const text = $('src').value;
+  const p = current();
+  if (p.builtin) {
+    if (text === p.code) return;
+    addCustom(text);
+    rebuildSelect();
+  } else {
+    p.code = text;
+  }
+}
+
+function startRename() {
+  if (current().builtin) return;
+  renaming = true;
+  $('nameInput').value = current().name;
+  $('examples').hidden = true;
+  $('nameInput').hidden = false;
+  $('nameInput').focus();
+  $('nameInput').select();
+}
+
+function newProgram() {
+  addCustom('');
+  $('src').value = '';
+  rebuildSelect();
+  $('src').focus();
+}
+
+function saveAs() {
+  const name = (prompt('Name for the copy:', freshName()) || '').trim();
+  if (!name) return;
+  addCustom($('src').value, name);
+  rebuildSelect();
+}
+
+function endRename(save) {
+  if (!renaming) return;
+  renaming = false;
+  const name = $('nameInput').value.trim();
+  if (save && name) current().name = name;
+  $('nameInput').hidden = true;
+  $('examples').hidden = false;
+  rebuildSelect();
+  $('rename').focus();
+}
+
+function removeCurrent() {
+  const p = current();
+  if (p.builtin) return;
+  if (!confirm('Delete "' + p.name + '"?')) return;
+  library.splice(library.indexOf(p), 1);
+  choose('ex1');
+}
+
+function wireUp() {
+  $('examples').onchange = () => choose($('examples').value);
+  $('src').addEventListener('input', onEdit);
+  $('rename').onclick = startRename;
+  $('remove').onclick = removeCurrent;
+  $('new').onclick = newProgram;
+  $('saveas').onclick = saveAs;
+  $('nameInput').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== 'Escape') return;
+    e.preventDefault();
+    endRename(e.key === 'Enter');
+  });
+  $('nameInput').addEventListener('blur', () => endRename(true));
 
   $('run').onclick = execute;
   $('src').addEventListener('keydown', (e) => {
@@ -229,18 +335,21 @@ function wireUp() {
   });
 }
 
-function initialProgram() {
-  try {
-    const fromLink = decodeURIComponent(location.hash.slice(1));
-    if (fromLink) return fromLink;
-  }
-  catch (_) {}
-  return EXAMPLES[1].code;
+function programFromLink() {
+  try { return decodeURIComponent(location.hash.slice(1)); }
+  catch (_) { return ''; }
 }
 
 async function init() {
   wireUp();
-  $('src').value = initialProgram();
+  const linked = programFromLink();
+  if (linked) {
+    const known = library.find((p) => p.code === linked);
+    if (known) selectedId = known.id;
+    else addCustom(linked);
+  }
+  rebuildSelect();
+  $('src').value = current().code;
   if (typeof createStepper !== 'function') {
     showError('Could not load stepper.js', 'Build it with ./build_wasm.sh, and open this page over http (python3 -m http.server), not file://.');
     return;

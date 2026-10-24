@@ -15,8 +15,13 @@
   <main>
     <section class="editor">
       <div class="row">
-        <label for="examples">Examples</label>
+        <label for="examples">Program</label>
         <select id="examples"></select>
+        <input id="nameInput" type="text" maxlength="40" aria-label="Program name" hidden>
+        <button id="rename" aria-label="Rename program" title="Rename (your own programs only)">✎</button>
+        <button id="remove" aria-label="Delete program" title="Delete (your own programs only)">✕</button>
+        <button id="new" aria-label="New program" title="New blank program">＋</button>
+        <button id="saveas" aria-label="Save a copy" title="Save a copy as…">⧉</button>
         <button id="run" class="primary" title="Ctrl/Cmd + Enter">Run</button>
       </div>
       <textarea id="src" spellcheck="false" rows="4" aria-label="Program"></textarea>
@@ -52,7 +57,7 @@
     </section>
   </main>
 
-  <script src="stepper.js"></script>   <!-- made by ./build_wasm.sh -->
+  <script src="stepper.js"></script>
   <script src="examples.js"></script>
   <script src="player.js"></script>
   <script src="app.js"></script>

@@ -103,6 +103,21 @@ button.primary {
     flex: 1 1 14rem;
     max-width: 22rem;
 }
+.row input[type="text"] {
+  flex: 1 1 14rem;
+  max-width: 22rem;
+  padding: .4rem .6rem;
+  font: inherit;
+  color: inherit;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--card);
+}
+#new, #saveas, #rename, #remove {
+    min-width: 2.4rem;
+    padding-left: .5rem;
+    padding-right: .5rem;
+}
 textarea {
   width: 100%;
   padding: .7rem;
