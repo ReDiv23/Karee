@@ -17,8 +17,9 @@ std::string dump(const ExprPtr& e) {
 }
 
 int main() {
-    const char* tests[] = {"f x y", "[1, 2, 3]", "[]", "map f [1,2]",
-                           "f (g x)", "-3", "(1"};
+    const char* tests[] = {
+        "1 + 2 * 3", "1 * 2 + 3", "1 - 2 - 3", "(1 + 2) * 3",
+        "f x + g y", "a && b || c == d", "-3 + 4", "1 +"};
     for (const char* src : tests) {
         std::cout << src << "   =>   ";
         try {

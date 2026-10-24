@@ -45,7 +45,18 @@ private:
         return k == Tok::Num || k == Tok::Ident || k == Tok::True || k == Tok::False || k == Tok::LParen || k == Tok::LBrack || k == Tok::Map || k == Tok::Fold;
     }
 
-    ExprPtr expr() { return app(); }
+    ExprPtr expr() { return binop(1); }
+
+    ExprPtr binop(int min_prec) {
+        ExprPtr lhs = app();
+        while (at(Tok::Op) && binop_prec(peek().text) >= min_prec) {
+            Token op = next();
+            int p = binop_prec(op.text);
+            ExprPtr rhs = binop(p + 1);
+            lhs = mk_node(Kind::BinOp, {lhs->span.start, rhs->span.end}, {lhs, rhs}, op.text);
+        }
+        return lhs;
+    }
 
     ExprPtr app() {
         ExprPtr f = atom();

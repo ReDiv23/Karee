@@ -52,3 +52,12 @@ struct ParseError : std::runtime_error {
     Span span;
     ParseError(const std::string& m, Span s) : std::runtime_error(m), span(s) {}
 };
+
+inline int binop_prec(const std::string& op) {
+    if (op == "||") return 1;
+    if (op == "&&") return 2;
+    if (op == "==" || op == "<" || op == ">") return 3;
+    if (op == "+" || op == "-") return 4;
+    if (op == "*" || op == "/") return 5;
+    return 0;
+}
