@@ -178,3 +178,15 @@ ExprPtr parse(const std::string& src) {
     Parser p(lex(src));
     return p.program();
 }
+
+std::pair<int, int> line_col(const std::string& src, int pos) {
+    int line = 1, col = 1;
+    for (int i = 0; i < pos && i < (int)src.size(); i++) {
+        if (src[i] == '\n') {
+            line++;
+            col = 1;
+        }
+        else col++;
+    }
+    return {line, col};
+}
