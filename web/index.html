@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stepper</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Stepper</h1>
+    <p>Watch a tiny functional program run, one reduction at a time.</p>
+  </header>
+
+  <main>
+    <section class="editor">
+      <div class="row">
+        <label for="examples">Examples</label>
+        <select id="examples"></select>
+        <button id="run" class="primary" title="Ctrl/Cmd + Enter">Run</button>
+      </div>
+      <textarea id="src" spellcheck="false" rows="4" aria-label="Program"></textarea>
+      <div id="error" class="error" hidden></div>
+    </section>
+
+    <section id="stage" class="stage" hidden>
+      <div id="expr" class="expr" aria-live="polite"></div>
+      <div class="meta"><span id="rule" class="badge"></span><span id="caption"></span></div>
+
+      <div id="boxes" class="boxes" hidden>
+        <div id="boxLabel" class="label"></div>
+        <div class="strip">
+          <div id="acc" class="box acc" hidden><small>acc</small><b id="accText"></b></div>
+          <div id="items" class="items"></div>
+        </div>
+      </div>
+
+      <div id="banner" class="banner" hidden></div>
+    </section>
+
+    <section id="controls" class="controls" hidden>
+      <div class="buttons">
+        <button id="first" aria-label="Back to start" title="Back to start (Home)">|◀</button>
+        <button id="prev"  aria-label="Step back" title="Step back (←)">◀</button>
+        <button id="play"  class="primary" aria-label="Play" title="Play / pause (Space)">▶</button>
+        <button id="next"  aria-label="Step forward" title="Step forward (→)">▶|</button>
+        <button id="last"  aria-label="Jump to end" title="Jump to end (End)">▶▶|</button>
+      </div>
+      <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Timeline">
+      <span id="counter" class="counter"></span>
+      <label class="speed">Speed <input id="speed" type="range" min="1" max="10" value="3"></label>
+    </section>
+  </main>
+
+  <script src="stepper.js"></script>   <!-- made by ./build_wasm.sh -->
+  <script src="examples.js"></script>
+  <script src="player.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
