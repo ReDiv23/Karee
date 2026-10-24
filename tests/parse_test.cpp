@@ -18,8 +18,15 @@ std::string dump(const ExprPtr& e) {
 
 int main() {
     const char* tests[] = {
-        "1 + 2 * 3", "1 * 2 + 3", "1 - 2 - 3", "(1 + 2) * 3",
-        "f x + g y", "a && b || c == d", "-3 + 4", "1 +"};
+        "let x = 2 in x + 1",
+        "\\x -> x * 2",
+        "\\x y -> x + y",
+        "if a then 1 else 2",
+        "let rec f = \\n -> if n == 0 then 1 else n * f (n - 1) in f 4",
+        "map (\\x -> x + 1) [1, 2]",
+        "1 + \\x -> x",
+        "let x = in 3",
+        "if 1 then 2"};
     for (const char* src : tests) {
         std::cout << src << "   =>   ";
         try {

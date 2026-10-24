@@ -45,7 +45,48 @@ private:
         return k == Tok::Num || k == Tok::Ident || k == Tok::True || k == Tok::False || k == Tok::LParen || k == Tok::LBrack || k == Tok::Map || k == Tok::Fold;
     }
 
-    ExprPtr expr() { return binop(1); }
+    ExprPtr expr() {
+        if (at(Tok::Let)) {
+            Token kw = next();
+            bool rec = false;
+            if (at(Tok::Rec)) {
+                next();
+                rec = true;
+            }
+            Token id = expect(Tok::Ident, "a name");
+            expect(Tok::Eq, "'='");
+            ExprPtr v = expr();
+            expect(Tok::In, "'in'");
+            ExprPtr body = expr();
+            return mk_node(rec ? Kind::LetRec : Kind::Let, {kw.span.start, body->span.end}, {v, body}, id.text);
+        }
+
+        if (at(Tok::Backslash)) {
+            Token kw = next();
+            std::vector<Token> params;
+            params.push_back(expect(Tok::Ident, "a parameter name"));
+            while (at(Tok::Ident)) params.push_back(next());
+            expect(Tok::Arrow, "'->'");
+            ExprPtr e = expr();
+            int end = e->span.end;
+            for (int k = params.size() - 1; k >= 0; k--) {
+                e = mk_node(Kind::Lam, {k == 0 ? kw.span.start : params[k].span.start, end}, {e}, params[k].text);
+            }
+            return e;
+        }
+
+        if (at(Tok::If)) {
+            Token kw = next();
+            ExprPtr c = expr();
+            expect(Tok::Then, "'then'");
+            ExprPtr a = expr();
+            expect(Tok::Else, "'else'");
+            ExprPtr b = expr();
+            return mk_node(Kind::If, {kw.span.start, b->span.end}, {c, a, b});
+        }
+
+        return binop(1);
+    }
 
     ExprPtr binop(int min_prec) {
         ExprPtr lhs = app();
@@ -59,6 +100,8 @@ private:
     }
 
     ExprPtr app() {
+        if (at(Tok::Let) || at(Tok::Backslash) || at(Tok::If)) return expr();
+
         ExprPtr f = atom();
         while (starts_atom(peek().type)) {
             ExprPtr a = atom();
