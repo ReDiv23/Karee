@@ -10,7 +10,7 @@ struct Span {
     int end = 0;
 };
 
-enum class Kind { Num, Bool, Var, Lam, App, Let, LetRec, If, BinOp, List, Map, Fold };
+enum class Kind { Num, Bool, Var, Lam, App, Let, LetRec, If, BinOp, List, Map, Fold, RecRef };
 
 struct Expr;
 using ExprPtr = std::shared_ptr<const Expr>;
@@ -26,6 +26,7 @@ using Path = std::vector<int>;
 //   List         : [elem, elem, ...]
 //   Map          : [f, list]
 //   Fold         : [f, acc, list]
+//   RecRef       : [lam]          name = the recursive name. Never written by the user: created by `let rec`, prints as just the name.
 struct Expr {
     Kind kind = Kind::Num;
     Span span;

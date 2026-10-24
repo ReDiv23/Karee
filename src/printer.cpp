@@ -82,6 +82,9 @@ public:
                 out += ' ';
                 child(e->kids[2], 2, 7);
                 break;
+            case Kind::RecRef:
+                out += e->name;
+                break;
         }
 
         int end = (int)out.size();
