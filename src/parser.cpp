@@ -93,7 +93,7 @@ private:
         while (at(Tok::Op) && binop_prec(peek().text) >= min_prec) {
             Token op = next();
             int p = binop_prec(op.text);
-            ExprPtr rhs = binop(p + 1);
+            ExprPtr rhs = binop(is_right_assoc(op.text) ? p : p + 1);
             lhs = mk_node(Kind::BinOp, {lhs->span.start, rhs->span.end}, {lhs, rhs}, op.text);
         }
         return lhs;

@@ -4,9 +4,9 @@ namespace {
 
 // `ctx` says how tightly the surrounding position binds:
 //   0     top level / free position
-//   1..5  operand of a binary operator with that precedence
-//   6     function position in an application   (f in  f x)
-//   7     argument position                     (x in  f x)
+//   1..6  operand of a binary operator with that precedence
+//   7     function position in an application   (f in  f x)
+//   8     argument position                     (x in  f x)
 class Printer {
 public:
     explicit Printer(const Path* target) : target_(target) {}
@@ -33,9 +33,9 @@ public:
                 child(e->kids[0], 0, 0);
                 break;
             case Kind::App:
-                child(e->kids[0], 0, 6);
+                child(e->kids[0], 0, 7);
                 out += ' ';
-                child(e->kids[1], 1, 7);
+                child(e->kids[1], 1, 8);
                 break;
             case Kind::Let:
             case Kind::LetRec:
@@ -55,9 +55,10 @@ public:
                 break;
             case Kind::BinOp: {
                 int p = binop_prec(e->name);
-                child(e->kids[0], 0, p);
+                bool right = is_right_assoc(e->name);
+                child(e->kids[0], 0, right ? p + 1 : p);
                 out += " " + e->name + " ";
-                child(e->kids[1], 1, p + 1);
+                child(e->kids[1], 1, right ? p : p + 1);
                 break;
             }
             case Kind::List:
@@ -70,17 +71,17 @@ public:
                 break;
             case Kind::Map:
                 out += "map ";
-                child(e->kids[0], 0, 7);
+                child(e->kids[0], 0, 8);
                 out += ' ';
-                child(e->kids[1], 1, 7);
+                child(e->kids[1], 1, 8);
                 break;
             case Kind::Fold:
                 out += "fold ";
-                child(e->kids[0], 0, 7);
+                child(e->kids[0], 0, 8);
                 out += ' ';
-                child(e->kids[1], 1, 7);
+                child(e->kids[1], 1, 8);
                 out += ' ';
-                child(e->kids[2], 2, 7);
+                child(e->kids[2], 2, 8);
                 break;
             case Kind::RecRef:
                 out += e->name;
@@ -116,7 +117,7 @@ private:
             case Kind::App:
             case Kind::Map:
             case Kind::Fold:
-                return ctx > 6;
+                return ctx > 7;
             default:
                 return false;
         }

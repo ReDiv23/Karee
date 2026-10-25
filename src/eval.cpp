@@ -1,3 +1,5 @@
+#include <climits>
+
 #include "eval.h"
 #include "printer.h"
 
@@ -92,6 +94,17 @@ ExprPtr step_child(const ExprPtr& e, size_t i, Ctx& cx) {
     return with_kids(e, kids);
 }
 
+bool ipow(long long base, long long exp, long long& out) {
+    long long result = 1;
+    while (exp > 0) {
+        if ((exp & 1) && __builtin_mul_overflow(result, base, &result)) return false;
+        exp >>= 1;
+        if (exp > 0 && __builtin_mul_overflow(base, base, &base)) return false;
+    }
+    out = result;
+    return true;
+}
+
 ExprPtr binop(const ExprPtr& e, Ctx& cx) {
     const ExprPtr& l = e->kids[0];
     const ExprPtr& r = e->kids[1];
@@ -114,10 +127,12 @@ ExprPtr binop(const ExprPtr& e, Ctx& cx) {
     if (!is_value(r)) return step_child(e, 1, cx);
 
     ExprPtr res;
-    if (op == "==") {
-        if (l->kind == Kind::Num && r->kind == Kind::Num) res = boolean(l->num == r->num);
-        else if (l->kind == Kind::Bool && r->kind == Kind::Bool) res = boolean(l->boolean == r->boolean);
-        else throw RuntimeError("'==' compares two numbers or two booleans", cx.path);
+    if (op == "==" || op == "!=") {
+        bool eq = false;
+        if (l->kind == Kind::Num && r->kind == Kind::Num) eq = (l->num == r->num);
+        else if (l->kind == Kind::Bool && r->kind == Kind::Bool) eq = (l->boolean == r->boolean);
+        else throw RuntimeError("'" + op + "' compares two numbers or two booleans", cx.path);
+        res = boolean(op == "==" ? eq : !eq);
     }
     else {
         if (l->kind != Kind::Num) throw RuntimeError("'" + op + "' needs a number, got a " + kind_name(l), sub(cx.path, 0));
@@ -137,10 +152,24 @@ ExprPtr binop(const ExprPtr& e, Ctx& cx) {
         }
         else if (op == "/") {
             if (b == 0) throw RuntimeError("division by zero", sub(cx.path, 1));
+            if (a == LLONG_MIN && b == -1) throw RuntimeError("integer overflow", cx.path);
             res = num(a / b);
+        }
+        else if (op == "%") {
+            if (b == 0) throw RuntimeError("modulo by zero", sub(cx.path, 1));
+            long long m = (b == -1) ? 0 : a % b;
+            if (m != 0 && ((m < 0) != (b < 0))) m += b;
+            res = num(m);
+        }
+        else if (op == "^") {
+            if (b < 0) throw RuntimeError("negative exponent: '^' works on whole numbers", sub(cx.path, 1));
+            if (!ipow(a, b, out)) throw RuntimeError("integer overflow", cx.path);
+            res = num(out);
         }
         else if (op == "<") res = boolean(a < b);
         else if (op == ">") res = boolean(a > b);
+        else if (op == "<=") res = boolean(a <= b);
+        else if (op == ">=") res = boolean(a >= b);
     }
     found(cx, "arith", "Compute " + show(e) + " = " + show(res));
     return res;

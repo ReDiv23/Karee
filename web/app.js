@@ -178,7 +178,7 @@ function showParseError(src, err) {
   showError('Parse error at line ' + err.line + ', column ' + err.col, err.msg, line + '\n' + caret);
 }
 
-const delay = () => 1800 / Number($('speed').value);
+const delay = () => 600 / Number($('speed').value);
 
 function play() {
   if (player.atEnd) {

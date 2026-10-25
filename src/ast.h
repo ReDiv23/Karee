@@ -57,8 +57,11 @@ struct ParseError : std::runtime_error {
 inline int binop_prec(const std::string& op) {
     if (op == "||") return 1;
     if (op == "&&") return 2;
-    if (op == "==" || op == "<" || op == ">") return 3;
+    if (op == "==" || op == "!=" || op == "<" || op == ">" || op == "<=" || op == ">=") return 3;
     if (op == "+" || op == "-") return 4;
-    if (op == "*" || op == "/") return 5;
+    if (op == "*" || op == "/" || op == "%") return 5;
+    if (op == "^") return 6;
     return 0;
 }
+
+inline bool is_right_assoc(const std::string& op) { return op == "^"; }

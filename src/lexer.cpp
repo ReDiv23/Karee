@@ -114,9 +114,21 @@ std::vector<Token> lex(const std::string& src) {
             case '+':
             case '*':
             case '/':
+            case '%':
+            case '^':
+                i++; emit(Tok::Op, a, i); break;
             case '<':
             case '>':
-                i++; emit(Tok::Op, a, i); break;
+                if (nx == '=') i += 2; else i++;
+                emit(Tok::Op, a, i);
+                break;
+            case '!':
+                if (nx == '=') {
+                    i += 2;
+                    emit(Tok::Op, a, i);
+                    break;
+                }
+                throw ParseError("unexpected '!' (did you mean '!='?)", {(int)a, (int)a + 1});
             case '&':
                 if (nx == '&') {
                     i += 2;

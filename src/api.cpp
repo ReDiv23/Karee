@@ -10,7 +10,7 @@
 
 namespace {
 
-const int MAX_STEPS = 2000;
+const int MAX_STEPS = 5000;
 
 std::string step_json(const std::string& text, Span r, const std::string& rule, const std::string& caption, const std::string& boxes = "null", const std::string& tree = "null") {
 return "{\"text\":\"" + json_escape(text) + "\",\"redex\":[" + std::to_string(r.start) + "," + std::to_string(r.end) + "],\"rule\":\"" + rule + "\",\"caption\":\"" + json_escape(caption) + "\",\"boxes\":" + boxes + ",\"tree\":" + tree + "}";
