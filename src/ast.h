@@ -10,7 +10,7 @@ struct Span {
     int end = 0;
 };
 
-enum class Kind { Num, Bool, Var, Lam, App, Let, LetRec, If, BinOp, List, Map, Fold, RecRef,Neg };
+enum class Kind { Num, Bool, Var, Lam, App, Let, LetRec, If, BinOp, List, Range, Map, Fold, Filter, Zip, RecRef, Neg };
 
 struct Expr;
 using ExprPtr = std::shared_ptr<const Expr>;
@@ -24,8 +24,11 @@ using Path = std::vector<int>;
 //   If           : [cond, then, else]
 //   BinOp        : [lhs, rhs]     name = operator ("+", "==", ...)
 //   List         : [elem, elem, ...]
+//   Range        : [start, end]  inclusive integer range
 //   Map          : [f, list]
 //   Fold         : [f, acc, list]
+//   Filter       : [predicate, list] initially internal state: [predicate, remaining, output, original, decisions, currentCall]
+//   Zip          : [list1, list2]
 //   RecRef       : [lam]          name = the recursive name. Never written by the user: created by `let rec`, prints as just the name.
 //   Neg          : [operand]      unary minus, e.g. -x  (a plain -3 is just a Num)
 struct Expr {
@@ -60,9 +63,12 @@ inline int binop_prec(const std::string& op) {
     if (op == "&&") return 2;
     if (op == "==" || op == "!=" || op == "<" || op == ">" || op == "<=" || op == ">=") return 3;
     if (op == "+" || op == "-") return 4;
-    if (op == "*" || op == "/" || op == "%") return 5;
-    if (op == "^") return 6;
+    if (op == "++") return 5;
+    if (op == "*" || op == "/" || op == "%") return 6;
+    if (op == ":") return 7;
+    if (op == "^") return 8;
+    if (op == ".") return 9;
     return 0;
 }
 
-inline bool is_right_assoc(const std::string& op) { return op == "^"; }
+inline bool is_right_assoc(const std::string& op) { return op == "^" || op == ":" || op == "."; }

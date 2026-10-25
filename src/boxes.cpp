@@ -17,6 +17,21 @@ std::string items_json(const ExprPtr& list) {
     return s + "]";
 }
 
+std::string decisions_json(const ExprPtr& decisions) {
+    std::string s = "[";
+
+    if (decisions->kind == Kind::List) {
+        for (size_t i = 0; i < decisions->kids.size(); ++i) {
+            if (i) s += ",";
+
+            const ExprPtr& d = decisions->kids[i];
+            s += d->kind == Kind::Bool && d->boolean ? "true" : "false";
+        }
+    }
+
+    return s + "]";
+}
+
 }
 
 std::string boxes_json(const ExprPtr& root, const Path* redex) {
@@ -27,7 +42,7 @@ std::string boxes_json(const ExprPtr& root, const Path* redex) {
     size_t depth = 0;
     ExprPtr cur = root;
     for (size_t d = 0;; d++) {
-        if (cur->kind == Kind::List || cur->kind == Kind::Map || cur->kind == Kind::Fold) {
+        if (cur->kind == Kind::List || cur->kind == Kind::Map || cur->kind == Kind::Fold || cur->kind == Kind::Filter) {
             focus = cur;
             depth = d;
         }
@@ -50,6 +65,22 @@ std::string boxes_json(const ExprPtr& root, const Path* redex) {
             const ExprPtr& xs = focus->kids[2];
             bool absorbing = redex && !inside && xs->kind == Kind::List && !xs->kids.empty();
             return "{\"kind\":\"fold\",\"fn\":" + quote(focus->kids[0]) + ",\"acc\":" + quote(focus->kids[1]) + ",\"items\":" + items_json(xs) + ",\"active\":" + (absorbing ? "0" : "-1") + ",\"accActive\":" + ((inside && next == 1) ? "true" : "false") + "}";
+        }
+        case Kind::Filter: {
+            bool state = focus->name == "$state";
+
+            const ExprPtr& predicate = focus->kids[0];
+            const ExprPtr& original = state ? focus->kids[3] : focus->kids[1];
+            const ExprPtr& decisions = state ? focus->kids[4] : mk_node(Kind::List, {}, {});
+
+            size_t processed = decisions->kids.size();
+
+            int active = -1;
+            if (original->kind == Kind::List && processed < original->kids.size()) {
+                active = static_cast<int>(processed);
+            }
+
+            return "{\"kind\":\"filter\",\"fn\":" + quote(predicate) + ",\"items\":" + items_json(original) + ",\"decisions\":" + decisions_json(decisions) + ",\"active\":" + std::to_string(active) + "}";
         }
         default:
             break;

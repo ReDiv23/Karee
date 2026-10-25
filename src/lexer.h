@@ -4,7 +4,7 @@
 #include <vector>
 #include "ast.h"
 
-enum class Tok { Num, Ident, Let, Rec, In, If, Then, Else, Map, Fold, True, False, Backslash, Arrow, LParen, RParen, LBrack, RBrack, Comma, Eq, Op, End };
+enum class Tok { Num, Ident, Let, Rec, In, If, Then, Else, Map, Fold, Filter, Zip, True, False, Backslash, Arrow, LParen, RParen, LBrack, RBrack, Comma, DotDot, Eq, Op, End };
 
 struct Token {
     Tok type = Tok::End;

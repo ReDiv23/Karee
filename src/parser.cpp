@@ -41,8 +41,29 @@ private:
         return next();
     }
 
+    std::string fresh_comp_name(int pos) const {
+        int suffix = 0;
+
+        while (true) {
+            std::string candidate = "__karee_comp_" + std::to_string(pos) + "_" + std::to_string(suffix);
+
+            bool used = false;
+
+            for (const Token& token : t_) {
+                if (token.type == Tok::Ident && token.text == candidate) {
+                    used = true;
+                    break;
+                }
+            }
+
+            if (!used) return candidate;
+
+            ++suffix;
+        }
+    }
+
     static bool starts_atom(Tok k) {
-        return k == Tok::Num || k == Tok::Ident || k == Tok::True || k == Tok::False || k == Tok::LParen || k == Tok::LBrack || k == Tok::Map || k == Tok::Fold;
+        return k == Tok::Num || k == Tok::Ident || k == Tok::True || k == Tok::False || k == Tok::LParen || k == Tok::LBrack || k == Tok::Map || k == Tok::Fold || k == Tok::Zip || k == Tok::Filter;
     }
 
     ExprPtr expr() {
@@ -90,12 +111,32 @@ private:
 
     ExprPtr binop(int min_prec) {
         ExprPtr lhs = app();
-        while (at(Tok::Op) && binop_prec(peek().text) >= min_prec) {
+
+        while (at(Tok::Op) &&
+            binop_prec(peek().text) >= min_prec) {
             Token op = next();
             int p = binop_prec(op.text);
+
             ExprPtr rhs = binop(is_right_assoc(op.text) ? p : p + 1);
-            lhs = mk_node(Kind::BinOp, {lhs->span.start, rhs->span.end}, {lhs, rhs}, op.text);
+
+            if (op.text == ".") {
+                std::string param = fresh_comp_name(op.span.start);
+
+                Span whole{lhs->span.start, rhs->span.end};
+
+                ExprPtr x = mk_node(Kind::Var, op.span, {}, param);
+
+                ExprPtr gx = mk_node(Kind::App, {rhs->span.start, rhs->span.end}, {rhs, x});
+
+                ExprPtr fx = mk_node(Kind::App, whole, {lhs, gx});
+
+                lhs = mk_node(Kind::Lam, whole, {fx}, param);
+            }
+            else {
+                lhs = mk_node(Kind::BinOp, {lhs->span.start, rhs->span.end}, {lhs, rhs},op.text);
+            }
         }
+
         return lhs;
     }
 
@@ -149,14 +190,31 @@ private:
             }
             case Tok::LBrack: {
                 Token open = next();
-                std::vector<ExprPtr> items;
-                if (!at(Tok::RBrack)) {
-                    items.push_back(expr());
-                    while (at(Tok::Comma)) {
-                        next();
-                        items.push_back(expr());
-                    }
+
+                if (at(Tok::RBrack)) {
+                    Token close = next();
+                    return mk_node(Kind::List, {open.span.start, close.span.end}, {});
                 }
+
+                ExprPtr first = expr();
+
+                if (at(Tok::DotDot)) {
+                    next();
+
+                    ExprPtr last = expr();
+                    Token close = expect(Tok::RBrack, "']'");
+
+                    return mk_node(Kind::Range, {open.span.start, close.span.end}, {first, last});
+                }
+
+                std::vector<ExprPtr> items;
+                items.push_back(first);
+
+                while (at(Tok::Comma)) {
+                    next();
+                    items.push_back(expr());
+                }
+
                 Token close = expect(Tok::RBrack, "']'");
                 return mk_node(Kind::List, {open.span.start, close.span.end}, items);
             }
@@ -169,6 +227,21 @@ private:
                 Token kw = next();
                 ExprPtr f = atom(), acc = atom(), xs = atom();
                 return mk_node(Kind::Fold, {kw.span.start, xs->span.end}, {f, acc, xs});
+            }
+            case Tok::Zip: {
+                Token kw = next();
+                ExprPtr xs = atom();
+                ExprPtr ys = atom();
+
+                return mk_node(Kind::Zip, {kw.span.start, ys->span.end}, {xs, ys});
+            }
+            case Tok::Filter: {
+                Token kw = next();
+
+                ExprPtr predicate = atom();
+                ExprPtr xs = atom();
+
+                return mk_node(Kind::Filter, {kw.span.start, xs->span.end}, {predicate, xs});
             }
             default:
                 break;

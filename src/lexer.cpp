@@ -13,6 +13,8 @@ std::vector<Token> lex(const std::string& src) {
         {"else", Tok::Else},
         {"map", Tok::Map},
         {"fold", Tok::Fold},
+        {"zip", Tok::Zip},
+        {"filter", Tok::Filter},
         {"true", Tok::True},
         {"false", Tok::False}
     };
@@ -79,6 +81,16 @@ std::vector<Token> lex(const std::string& src) {
                 i++;
                 emit(Tok::RParen, a, i);
                 break;
+            case '.':
+                if (nx == '.') {
+                    i += 2;
+                    emit(Tok::DotDot, a, i);
+                }
+                else {
+                    i++;
+                    emit(Tok::Op, a, i);
+                }
+                break;
             case '[':
                 i++;
                 emit(Tok::LBrack, a, i);
@@ -112,6 +124,15 @@ std::vector<Token> lex(const std::string& src) {
                 }
                 break;
             case '+':
+                if (nx == '+') {
+                    i += 2;
+                    emit(Tok::Op, a, i);
+                } else {
+                    i++;
+                    emit(Tok::Op, a, i);
+                }
+                break;
+            case ':':
             case '*':
             case '/':
             case '%':

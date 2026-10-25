@@ -16,8 +16,11 @@ const char* tag(Kind k) {
         case Kind::If: return "if";
         case Kind::BinOp: return "op";
         case Kind::List: return "list";
+        case Kind::Range: return "range";
         case Kind::Map: return "map";
         case Kind::Fold: return "fold";
+        case Kind::Filter: return "filter";
+        case Kind::Zip: return "zip";
         case Kind::RecRef: return "ref";
         case Kind::Neg: return "neg";
     }
@@ -50,6 +53,20 @@ const char* role(const Expr& p, size_t i) {
         case Kind::BinOp: return i == 0 ? "lhs" : "rhs";
         case Kind::Map: return i == 0 ? "f" : "list";
         case Kind::Fold: return i < 3 ? foldr[i] : "";
+        case Kind::Filter:
+            if (p.name != "$state") return i == 0 ? "predicate" : "list";
+
+            switch (i) {
+                case 0: return "predicate";
+                case 1: return "remaining";
+                case 2: return "output";
+                case 3: return "original";
+                case 4: return "decisions";
+                case 5: return "currentCall";
+                default: return "";
+            }
+        case Kind::Zip: return i == 0 ? "list1" : "list2";
+        case Kind::Range: return i == 0 ? "start" : "end";
         default: return "";
     }
 }

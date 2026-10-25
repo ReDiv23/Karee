@@ -22,6 +22,7 @@ function setView(v) {
   view = v;
   $('viewCode').setAttribute('aria-pressed', String(v === 'code'));
   $('viewTree').setAttribute('aria-pressed', String(v === 'tree'));
+  document.body.classList.toggle('tree-mode', v === 'tree');
   render();
 }
 
@@ -103,7 +104,7 @@ function render() {
   $('next').disabled = $('last').disabled = player.atEnd;
 }
 
-function syncItems(container, texts, isLit, isBad) {
+function syncItems(container, texts, isLit, isBad, isDropped = () => false) {
   while (container.children.length < texts.length) {
     const d = document.createElement('div');
     d.className = 'box';
@@ -116,6 +117,7 @@ function syncItems(container, texts, isLit, isBad) {
     el.title = t;
     el.classList.toggle('lit', isLit(i));
     el.classList.toggle('bad', isLit(i) && isBad);
+    el.classList.toggle('dropped', isDropped(i));
   });
 }
 
@@ -140,7 +142,7 @@ function renderBoxes(step) {
     $('boxLabel').textContent = 'map  ' + b.fn;
     syncItems($('items'), b.items, () => b.all, bad);
   }
-  else {
+  else if (b.kind === 'fold') {
     $('boxLabel').textContent = 'fold  ' + b.fn;
     $('accText').textContent = b.acc;
     acc.title = b.acc;
@@ -148,6 +150,11 @@ function renderBoxes(step) {
     acc.classList.toggle('absorbing', b.active >= 0);
     acc.classList.toggle('bad', b.accActive && bad);
     syncItems($('items'), b.items, (i) => i === b.active, bad);
+  }
+  else if (b.kind === 'filter') {
+    $('boxLabel').textContent = 'filter  ' + b.fn;
+
+    syncItems($('items'), b.items, (i) => i === b.active, bad, (i) => b.decisions[i] === false);
   }
 }
 
@@ -352,6 +359,7 @@ function wireUp() {
   $('zin').onclick = () => treeView.zoomBy(1.25);
   $('zout').onclick = () => treeView.zoomBy(1 / 1.25);
   $('zfit').onclick = () => treeView.fit();
+  $('zfocus').onclick = () => treeView.focus();
 
   document.addEventListener('keydown', (e) => {
     if (['TEXTAREA', 'SELECT', 'INPUT'].includes(e.target.tagName)) return;

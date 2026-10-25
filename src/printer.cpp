@@ -69,6 +69,13 @@ public:
                 }
                 out += ']';
                 break;
+            case Kind::Range:
+                out += '[';
+                child(e->kids[0], 0, 0);
+                out += "..";
+                child(e->kids[1], 1, 0);
+                out += ']';
+                break;
             case Kind::Map:
                 out += "map ";
                 child(e->kids[0], 0, 8);
@@ -83,6 +90,20 @@ public:
                 out += ' ';
                 child(e->kids[2], 2, 8);
                 break;
+            case Kind::Filter: {
+                out += "filter ";
+                child(e->kids[0], 0, 8);
+                out += ' ';
+                const ExprPtr& xs = (e->name == "$state") ? e->kids[3] : e->kids[1];
+                child(xs, 1, 8);
+                break;
+            }
+            case Kind::Zip:
+                out += "zip ";
+                child(e->kids[0], 0, 8);
+                out += ' ';
+                child(e->kids[1], 1, 8);
+                break;
             case Kind::RecRef:
                 out += e->name;
                 break;
@@ -90,7 +111,7 @@ public:
                 out += '-';
                 bool lit = e->kids[0]->kind == Kind::Num && e->kids[0]->num >= 0;
                 if (lit) out += '(';
-                child(e->kids[0], 0, 8);
+                child(e->kids[0], 0, 9);
                 if (lit) out += ')';
                 break;
             }
@@ -126,6 +147,8 @@ private:
             case Kind::App:
             case Kind::Map:
             case Kind::Fold:
+            case Kind::Filter:
+            case Kind::Zip:
                 return ctx > 7;
             default:
                 return false;

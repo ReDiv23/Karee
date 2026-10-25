@@ -126,6 +126,10 @@ textarea {
   background: var(--card);
   font-family: ui-monospace, Menlo, Consolas, monospace;
   font-size: .95rem;
+  line-height: 1.55;
+  tab-size: 4;
+  white-space: pre-wrap;
+  overflow-wrap: normal;
   resize: vertical;
 }
 .error {
@@ -251,7 +255,7 @@ mark.bad {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: transform .25s, background .25s, border-color .25s, box-shadow .25s;
+  transition: transform .25s, opacity .25s, filter .25s, background .25s, border-color .25s, box-shadow .25s;
   animation: pop .25s ease-out;
 }
 @keyframes pop {
@@ -263,6 +267,11 @@ mark.bad {
         transform: none;
         opacity: 1;
     }
+}
+.box.dropped {
+    opacity: 0.22;
+    transform: scale(0.92);
+    filter: grayscale(1);
 }
 .box.lit {
   border-color: var(--accent);
@@ -366,13 +375,21 @@ mark.bad {
 
 .treewrap {
   position: relative;
-  height: 22rem;
-  min-height: 12rem;
+  height: clamp(28rem, 75vh, 64rem);
+  min-height: 14rem;
   resize: vertical;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--bg);
+}
+body.tree-mode header, body.tree-mode main {
+    max-width: min(96vw, 1500px);
+}
+.treewrap.following #zfocus {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
 }
 #tree {
     width: 100%;

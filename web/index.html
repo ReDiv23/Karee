@@ -24,7 +24,7 @@
         <button id="saveas" aria-label="Save a copy" title="Save a copy as…">⧉</button>
         <button id="run" class="primary" title="Ctrl/Cmd + Enter">Run</button>
       </div>
-      <textarea id="src" spellcheck="false" rows="4" aria-label="Program"></textarea>
+      <textarea id="src" spellcheck="false" rows="8" aria-label="Program"></textarea>
       <div id="error" class="error" hidden></div>
     </section>
 
@@ -39,7 +39,8 @@
           <span class="treehint">scroll to zoom · drag to pan</span>
           <button id="zout" aria-label="Zoom out">−</button>
           <button id="zin" aria-label="Zoom in">＋</button>
-          <button id="zfit">Fit</button>
+          <button id="zfit" title="Show the whole tree">Fit</button>
+          <button id="zfocus" title="Zoom to the node being reduced and keep it centred as you step">Follow</button>
         </div>
         <svg id="tree" role="img" aria-label="Syntax tree of the current expression"></svg>
       </div>

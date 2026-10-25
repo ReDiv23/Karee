@@ -29,7 +29,9 @@ class TreeView {
     this.svg = svg;
     this.wrap = wrap;
     this.s = 1; this.tx = 0; this.ty = 0;
-    this.userMoved = false;
+    this._userMoved = false;
+    this.following = false;
+    this.hotNode = null;
     this.data = null;
     this.bad = false;
     this.size = { w: 0, h: 0 };
@@ -41,8 +43,13 @@ class TreeView {
     const svg = this.svg;
     svg.addEventListener('wheel', (e) => {
       e.preventDefault();
+      const f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      if (this.following) {
+        this.rescale(f);
+        return;
+      }
       const r = svg.getBoundingClientRect();
-      this.zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.15 : 1 / 1.15);
+      this.zoomAt(e.clientX - r.left, e.clientY - r.top, f);
     }, { passive: false });
 
     let drag = null;
@@ -55,6 +62,7 @@ class TreeView {
       if (!drag) return;
       this.tx = drag.tx + e.clientX - drag.x;
       this.ty = drag.ty + e.clientY - drag.y;
+      this.following = false;
       this.userMoved = true;
       this.apply();
     });
@@ -63,35 +71,74 @@ class TreeView {
     svg.addEventListener('pointercancel', end);
 
     new ResizeObserver(() => {
-      if (!this.wrap.hidden && this.data && !this.userMoved) this.fit();
+      if (this.wrap.hidden || !this.data) return;
+      if (this.following) this.centerOnHot();
+      else if (!this.userMoved) this.fitTransform();
     }).observe(this.wrap);
   }
 
+  get userMoved() { return this._userMoved; }
+  set userMoved(v) {
+    this._userMoved = v;
+    if (!v) this.following = false;
+  }
+
   zoomAt(mx, my, f) {
-    const ns = Math.max(0.2, Math.min(4, this.s * f));
+    const ns = Math.max(0.05, Math.min(4, this.s * f));
     this.tx = mx - (mx - this.tx) * ns / this.s;
     this.ty = my - (my - this.ty) * ns / this.s;
     this.s = ns;
+    this.following = false;
     this.userMoved = true;
     this.apply();
   }
   zoomBy(f) {
+    if (this.following) {
+      this.rescale(f);
+      return;
+    }
     const r = this.svg.getBoundingClientRect();
     this.zoomAt(r.width / 2, r.height / 2, f);
   }
+  rescale(f) {
+    this.s = Math.max(0.05, Math.min(4, this.s * f));
+    this.centerOnHot();
+  }
 
   fit() {
+    this.userMoved = false;       // also clears following
+    this.fitTransform();
+  }
+
+  fitTransform() {
     const cw = this.svg.clientWidth, ch = this.svg.clientHeight;
     if (!cw || !ch || !this.size.w) return;
     const s = Math.min((cw - 24) / this.size.w, (ch - 24) / this.size.h, 1.5);
     this.s = s;
     this.tx = (cw - this.size.w * s) / 2;
     this.ty = (ch - this.size.h * s) / 2;
-    this.userMoved = false;
+    this.apply();
+  }
+
+  focus() {
+    if (!this.hotNode) return;
+    this.following = true;
+    this._userMoved = true;
+    if (this.s < 0.8) this.s = 1;
+    this.centerOnHot();
+  }
+
+  centerOnHot() {
+    const h = this.hotNode;
+    const cw = this.svg.clientWidth, ch = this.svg.clientHeight;
+    if (!h || !cw || !ch) return;
+    this.tx = cw / 2 - h.x * this.s;
+    this.ty = ch * 0.4 - (h.y + h.h / 2) * this.s;
     this.apply();
   }
 
   apply() {
+    this.wrap.classList.toggle('following', this.following);
     if (this.g) this.g.setAttribute('transform', `translate(${this.tx} ${this.ty}) scale(${this.s})`);
   }
 
@@ -131,6 +178,7 @@ class TreeView {
   draw() {
     this.svg.replaceChildren();
     this.g = null;
+    this.hotNode = null;
     if (!this.data) return;
 
     this.maxDepth = 0;
@@ -143,11 +191,16 @@ class TreeView {
     const nodes = svgEl('g', {}, this.g);
     this.walk(this.data, edges, nodes, false);
 
-    if (this.userMoved) this.apply();
-    else this.fit();
+    if (this.following) {
+      if (this.hotNode) this.centerOnHot();
+      else this.fitTransform();
+    }
+    else if (this.userMoved) this.apply();
+    else this.fitTransform();
   }
 
   walk(n, edges, nodes, inHot) {
+    if (n.hot) this.hotNode = n;
     inHot = inHot || !!n.hot;
     for (const c of n.c || []) {
       const x1 = n.x, y1 = n.y + n.h, x2 = c.x, y2 = c.y, ym = (y1 + y2) / 2;
