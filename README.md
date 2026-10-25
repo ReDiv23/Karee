@@ -4,7 +4,29 @@ Watch a tiny functional program run, one reduction at a time.
 
 Karee is an interpreter for a small Haskell-like language (numbers, booleans, lists, `let`, functions, `map`, `fold`). It rewrites the expression in place, one reduction per step, and shows you exactly which part is being reduced, as highlighted code or as a syntax tree. Lists appear as rows of boxes, and the box being worked on lights up.
 
-<!-- Add a screenshot or GIF here: docs/demo.gif -->
+## Run it
+
+You need [Emscripten](https://emscripten.org/docs/getting_started/downloads.html).
+
+```sh
+source ~/emsdk/emsdk_env.sh      # activate Emscripten in this terminal
+./build_wasm.sh                  # produces web/karee.js and web/karee.wasm
+python3 -m http.server -d web 8000
+```
+
+Open <http://localhost:8000>. Use `http://`, not `file://`, because the browser will not load the `.wasm` file from disk.
+
+If the page looks stale after a change, hard-refresh (Ctrl/Cmd+Shift+R).
+
+### Command-line trace (no Emscripten needed)
+
+```sh
+g++ -std=c++17 -Isrc src/main.cpp src/api.cpp src/lexer.cpp src/parser.cpp \
+    src/printer.cpp src/eval.cpp src/boxes.cpp src/tree.cpp -o karee
+
+echo 'let x = 2 + 3 in x * x' | ./karee -t     # human-readable trace
+echo 'map (\x -> x * 2) [1, 2]' | ./karee       # the JSON the web app consumes
+```
 
 ## Features
 
@@ -48,30 +70,6 @@ let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1) in fact 4
 `map`, `fold` and the built-ins are keywords that take their arguments directly, so wrap compound arguments in parentheses: `fold f 0 (map g xs)`.
 
 Evaluation is strict (call-by-value), left to right, using substitution. There are no strings and no pattern matching.
-
-## Run it locally
-
-You need [Emscripten](https://emscripten.org/docs/getting_started/downloads.html).
-
-```sh
-source ~/emsdk/emsdk_env.sh      # activate Emscripten in this terminal
-./build_wasm.sh                  # produces web/karee.js and web/karee.wasm
-python3 -m http.server -d web 8000
-```
-
-Open <http://localhost:8000>. Use `http://`, not `file://`, because the browser will not load the `.wasm` file from disk.
-
-If the page looks stale after a change, hard-refresh (Ctrl/Cmd+Shift+R).
-
-### Command-line trace (no Emscripten needed)
-
-```sh
-g++ -std=c++17 -Isrc src/main.cpp src/api.cpp src/lexer.cpp src/parser.cpp \
-    src/printer.cpp src/eval.cpp src/boxes.cpp src/tree.cpp -o karee
-
-echo 'let x = 2 + 3 in x * x' | ./karee -t     # human-readable trace
-echo 'map (\x -> x * 2) [1, 2]' | ./karee       # the JSON the web app consumes
-```
 
 ## How it works
 
@@ -119,5 +117,4 @@ build_wasm.sh
 ## Limits
 
 - Runs stop after 5000 steps, which catches infinite loops, and the UI says so.
-- Very large intermediate expressions make the tree wide. Use zoom and Fit.
 - Programs you write live in memory and are lost on reload. Share a link to keep one.
