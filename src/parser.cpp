@@ -101,6 +101,11 @@ private:
 
     ExprPtr app() {
         if (at(Tok::Let) || at(Tok::Backslash) || at(Tok::If)) return expr();
+        if (at(Tok::Op) && peek().text == "-" && t_[i_ + 1].type != Tok::Num) {
+            Token minus = next();
+            ExprPtr operand = app();
+            return mk_node(Kind::Neg, {minus.span.start, operand->span.end}, {operand});
+        }
 
         ExprPtr f = atom();
         while (starts_atom(peek().type)) {

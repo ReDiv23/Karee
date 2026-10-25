@@ -19,6 +19,7 @@ function labelOf(n) {
     case 'fold': return 'fold';
     case 'list': return (n.c ? '[' + n.c.length + ']' : '[ ]');
     case 'ref': return n.t + ' \u21ba';
+    case 'neg': return 'neg';
     default: return n.t;
   }
 }

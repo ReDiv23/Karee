@@ -86,6 +86,14 @@ public:
             case Kind::RecRef:
                 out += e->name;
                 break;
+            case Kind::Neg: {
+                out += '-';
+                bool lit = e->kids[0]->kind == Kind::Num && e->kids[0]->num >= 0;
+                if (lit) out += '(';
+                child(e->kids[0], 0, 8);
+                if (lit) out += ')';
+                break;
+            }
         }
 
         int end = (int)out.size();
@@ -110,6 +118,7 @@ private:
             case Kind::Lam:
             case Kind::Let:
             case Kind::LetRec:
+            case Kind::Neg:
             case Kind::If:
                 return ctx > 0;
             case Kind::BinOp:

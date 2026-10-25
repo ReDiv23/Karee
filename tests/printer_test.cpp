@@ -18,8 +18,18 @@ int main() {
         {R"~(f (g x))~",                        R"~(f (g x))~"},
         {R"~(-3 + 4)~",                         R"~((-3) + 4)~"},
         {R"~(1 + \x -> x)~",                    R"~(1 + (\x -> x))~"},
-        {R"~(let rec fact = \n -> if n == 0 then 1 else n * fact (n-1) in fact 4)~",
-         R"~(let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1) in fact 4)~"},
+        {R"~(let rec fact = \n -> if n == 0 then 1 else n * fact (n-1) in fact 4)~", R"~(let rec fact = \n -> if n == 0 then 1 else n * fact (n - 1) in fact 4)~"},
+        {R"~(-x)~",                             R"~(-x)~"},
+        {R"~(-(a + b))~",                       R"~(-(a + b))~"},
+        {R"~(-(3))~",                           R"~(-(3))~"},     // stays a negation: "-3" would be a literal
+        {R"~(- -x)~",                           R"~(-(-x))~"},    // "--" would start a comment
+        {R"~(a - -x)~",                         R"~(a - (-x))~"},
+        {R"~(-x ^ 2)~",                         R"~((-x) ^ 2)~"},
+        {R"~(-(x ^ 2))~",                       R"~(-(x ^ 2))~"},
+        {R"~(-f 3)~",                           R"~(-(f 3))~"},
+        {R"~(\x -> -x)~",                       R"~(\x -> -x)~"},
+        {R"~([-x, 2])~",                        R"~([-x, 2])~"},
+        {R"~(f (-x))~",                         R"~(f (-x))~"},
     };
 
     for (const Case& c : cases) {
@@ -29,6 +39,10 @@ int main() {
                               "\n  want: " + c.want);
         CHECK(twice == once,  std::string("round trip changed: ") + c.src);
     }
+
+    CHECK(parse("-(3)")->kind == Kind::Neg, "-(3) is a Neg node");
+    CHECK(parse("-3")->kind == Kind::Num, "-3 is a plain literal");
+    CHECK(parse(pretty(parse("-(3)")).text)->kind == Kind::Neg, "-(3) survives print + re-parse");
 
     // redex ranges: does the printer point at the right characters?
     {

@@ -214,6 +214,17 @@ ExprPtr rec(const ExprPtr& e, Ctx& cx) {
             return subst(f->kids[0], f->name, a);
         }
 
+        case Kind::Neg: {
+            const ExprPtr& v = e->kids[0];
+            if (!is_value(v)) return step_child(e, 0, cx);
+            if (v->kind != Kind::Num) throw RuntimeError("'-' needs a number, got a " + kind_name(v), sub(cx.path, 0));
+            long long out = 0;
+            if (__builtin_sub_overflow(0LL, v->num, &out)) throw RuntimeError("integer overflow", cx.path);
+            ExprPtr res = num(out);
+            found(cx, "arith", "Compute " + show(e) + " = " + show(res));
+            return res;
+        }
+
         case Kind::LetRec: {
             const ExprPtr& lam = e->kids[0];
             if (lam->kind != Kind::Lam) throw RuntimeError("'let rec' needs a function (\\x -> ...) on the right-hand side", sub(cx.path, 0));

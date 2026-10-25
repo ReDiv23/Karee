@@ -51,5 +51,8 @@ std::string boxes_json(const ExprPtr& root, const Path* redex) {
             bool absorbing = redex && !inside && xs->kind == Kind::List && !xs->kids.empty();
             return "{\"kind\":\"fold\",\"fn\":" + quote(focus->kids[0]) + ",\"acc\":" + quote(focus->kids[1]) + ",\"items\":" + items_json(xs) + ",\"active\":" + (absorbing ? "0" : "-1") + ",\"accActive\":" + ((inside && next == 1) ? "true" : "false") + "}";
         }
+        default:
+            break;
     }
+    return "null";
 }

@@ -47,6 +47,17 @@ int main() {
         {"let rec sum = \\xs -> fold (\\a x -> a + x) 0 xs in sum [1, 2, 3]", "6", -1},
         {"let rec f = \\f -> f in f 3",        "3",        -1},   // parameter shadows the name
         {"let rec f = \\n -> n in 5",         "5",        1},    // never used: one step, no unrolling
+        // unary minus
+        {"let x = 3 in -x",                   "-3",       2},    // bind x, then negate
+        {"map (\\x -> -x) [1, 2]",            "[-1, -2]", 5},    // 1 expand + 2 x (beta, negate)
+        {"-(1 + 2)",                          "-3",       2},
+        {"- -3",                              "3",        1},    // -3 is a literal, so only one negation
+        {"1 - -2",                            "3",        1},
+        {"-(2 ^ 2)",                          "-4",       2},
+        {"let x = 2 in -x ^ 2",               "4",        3},    // unary minus binds tighter than ^: (-x) ^ 2
+        {"let f = \\x -> x in -f 3",          "-3",       3},    // -f 3 is -(f 3)
+        {"[1, -2, 3]",                        "[1, -2, 3]", 0},  // negative literals are values already
+        {"-3 + 4",                            "1",        1},
     };
     for (const Ok& t : oks) {
         int n;
@@ -71,6 +82,9 @@ int main() {
         {"fold (\\a x -> a) 0 5",  "fold needs a list as its third argument",    {2}},
         {"let rec x = 5 in x",     "'let rec' needs a function (\\x -> ...) on the right-hand side", {0}},
         {"let rec f = \\n -> n in f 1 + undefined", "unbound variable 'undefined'", {1}},
+        {"-true",                  "'-' needs a number, got a boolean",    {0}},
+        {"-[1]",                   "'-' needs a number, got a list",       {0}},
+        {"let x = 0 - 9223372036854775807 - 1 in -x", "integer overflow",  {}},   // -LLONG_MIN
     };
     for (const Bad& b : bads) {
         try {

@@ -19,6 +19,7 @@ const char* tag(Kind k) {
         case Kind::Map: return "map";
         case Kind::Fold: return "fold";
         case Kind::RecRef: return "ref";
+        case Kind::Neg: return "neg";
     }
     return "num";
 }
