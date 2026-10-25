@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Stepper</title>
+  <title>Karee</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
-    <h1>Stepper</h1>
+    <h1>Karee</h1>
     <p>Watch a tiny functional program run, one reduction at a time.</p>
   </header>
 
@@ -29,7 +29,20 @@
     </section>
 
     <section id="stage" class="stage" hidden>
+      <div class="view" role="group" aria-label="View">
+        <button id="viewCode" class="seg" aria-pressed="true">Code</button>
+        <button id="viewTree" class="seg" aria-pressed="false">Tree</button>
+      </div>
       <div id="expr" class="expr" aria-live="polite"></div>
+      <div id="treeWrap" class="treewrap" hidden>
+        <div class="treetools">
+          <span class="treehint">scroll to zoom · drag to pan</span>
+          <button id="zout" aria-label="Zoom out">−</button>
+          <button id="zin" aria-label="Zoom in">＋</button>
+          <button id="zfit">Fit</button>
+        </div>
+        <svg id="tree" role="img" aria-label="Syntax tree of the current expression"></svg>
+      </div>
       <div class="meta"><span id="rule" class="badge"></span><span id="caption"></span></div>
 
       <div id="boxes" class="boxes" hidden>
@@ -57,9 +70,10 @@
     </section>
   </main>
 
-  <script src="stepper.js"></script>
+  <script src="karee.js"></script>
   <script src="examples.js"></script>
   <script src="player.js"></script>
+  <script src="tree.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

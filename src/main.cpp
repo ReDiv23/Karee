@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     if (argc > file_arg) {
         std::ifstream f(argv[file_arg]);
         if (!f) {
-            std::cerr << "cannot open " << argv[file_arg] << "\n" << "Usage:  ./stepper [-t] <file.hs>" << "\n";
+            std::cerr << "cannot open " << argv[file_arg] << "\n" << "Usage:  ./karee [-t] <file.hs>" << "\n";
             return 1;
         }
         src.assign(std::istreambuf_iterator<char>(f), {});

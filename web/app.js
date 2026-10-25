@@ -4,6 +4,26 @@ let runProgram = null;
 let playing = false;
 let timer = null;
 let finalNote = null;
+let view = 'code';
+const treeView = new TreeView($('tree'), $('treeWrap'));
+
+const ICONS = {
+  first: 'M3 5h2v14H3zM13 5v14L5 12zM21 5v14L13 12z',
+  prev:  'M6 5h2v14H6zM19 5v14L8 12z',
+  play:  'M8 5v14l11-7z',
+  pause: 'M7 5h4v14H7zM13 5h4v14h-4z',
+  next:  'M6 5v14l11-7zM17 5h2v14h-2z',
+  last:  'M3 5v14l8-7zM11 5v14l8-7zM19 5h2v14h-2z',
+};
+const icon = (name) =>
+  '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="' + ICONS[name] + '"/></svg>';
+
+function setView(v) {
+  view = v;
+  $('viewCode').setAttribute('aria-pressed', String(v === 'code'));
+  $('viewTree').setAttribute('aria-pressed', String(v === 'tree'));
+  render();
+}
 
 function execute() {
   stop();
@@ -54,6 +74,10 @@ function render() {
     expr.append(mark);
   }
   expr.append(parts.after);
+
+  $('expr').hidden = view === 'tree';
+  $('treeWrap').hidden = view !== 'tree';
+  if (view === 'tree') treeView.show(s.tree, s.rule === 'error');
 
   const badge = $('rule');
   badge.textContent = s.rule;
@@ -180,7 +204,7 @@ function stop() {
 }
 function syncPlayButton() {
   const b = $('play');
-  b.textContent = playing ? '⏸' : '▶';
+  b.innerHTML = icon(playing ? 'pause' : 'play');
   b.setAttribute('aria-label', playing ? 'Pause' : 'Play');
 }
 const manual = (fn) => () => {
@@ -293,6 +317,8 @@ function removeCurrent() {
 }
 
 function wireUp() {
+  for (const name of ['first', 'prev', 'next', 'last']) $(name).innerHTML = icon(name);
+  syncPlayButton();
   $('examples').onchange = () => choose($('examples').value);
   $('src').addEventListener('input', onEdit);
   $('rename').onclick = startRename;
@@ -320,6 +346,12 @@ function wireUp() {
   $('last').onclick  = manual(() => player.goto(player.count - 1));
   $('play').onclick  = () => (playing ? stop() : play());
   $('scrub').oninput = manual(() => player.goto(Number($('scrub').value)));
+
+  $('viewCode').onclick = () => setView('code');
+  $('viewTree').onclick = () => setView('tree');
+  $('zin').onclick = () => treeView.zoomBy(1.25);
+  $('zout').onclick = () => treeView.zoomBy(1 / 1.25);
+  $('zfit').onclick = () => treeView.fit();
 
   document.addEventListener('keydown', (e) => {
     if (['TEXTAREA', 'SELECT', 'INPUT'].includes(e.target.tagName)) return;
@@ -350,11 +382,11 @@ async function init() {
   }
   rebuildSelect();
   $('src').value = current().code;
-  if (typeof createStepper !== 'function') {
-    showError('Could not load stepper.js', 'Build it with ./build_wasm.sh, and open this page over http (python3 -m http.server), not file://.');
+  if (typeof createKaree !== 'function') {
+    showError('Could not load karee.js', 'Build it with ./build_wasm.sh, and open this page over http (python3 -m http.server), not file://.');
     return;
   }
-  const module = await createStepper();
+  const module = await createKaree();
   runProgram = module.cwrap('run', 'string', ['string']);
   execute();
 }

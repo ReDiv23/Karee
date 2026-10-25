@@ -1,3 +1,2 @@
-build/
-build-wasm/
-*.o
+web/karee.js
+web/karee.wasm
